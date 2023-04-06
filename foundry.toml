@@ -2,5 +2,12 @@
 src = 'src'
 out = 'out'
 libs = ['lib']
+remappings = [
+  'forge-std/=lib/forge-std/src',
+  'solmate/=lib/solmate/src',
+  'oz/=lib/openzeppelin-contracts/contracts',
+  'safe/=lib/safe-contracts/contracts',
+]
 
+eth-rpc-url = 'http://localhost:8545'
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config
