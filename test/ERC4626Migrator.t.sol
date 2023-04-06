@@ -86,9 +86,15 @@ contract ERC4626MigratorTest is Test {
         vars.userEthBalBefore = vars.user.balance;
         vars.migratorEthBalBefore = address(MIGRATOR).balance;
 
+        assertEq(ERC4626.balanceOf(address(MIGRATOR)), 0, "ERC4626");
+        assertEq(ERC4626.balanceOf(vars.user), _migrationAmount, "ERC4626");
+
         // Migrate
         vm.prank(vars.user);
         (uint256 eth, uint256 dai, uint256 usdc) = MIGRATOR.migrate(_migrationAmount, signature);
+
+        assertEq(ERC4626.balanceOf(address(MIGRATOR)), _migrationAmount, "ERC4626");
+        assertEq(ERC4626.balanceOf(vars.user), 0, "ERC4626");
 
         // Check the amounts returned
         uint256 expectedEth = uint256(_migrationAmount).mulDivDown(_ethAmount, _totalSupply);
@@ -164,8 +170,14 @@ contract ERC4626MigratorTest is Test {
 
         uint256 migratorEthBalBefore = address(MIGRATOR).balance;
 
+        assertEq(ERC4626.balanceOf(address(MIGRATOR)), 0, "ERC4626");
+        assertEq(ERC4626.balanceOf(address(MS)), _migrationAmount, "ERC4626");
+
         vm.prank(address(MS));
         (uint256 eth, uint256 dai, uint256 usdc) = MIGRATOR.migrate(_migrationAmount, "");
+
+        assertEq(ERC4626.balanceOf(address(MIGRATOR)), _migrationAmount, "ERC4626");
+        assertEq(ERC4626.balanceOf(address(MS)), 0, "ERC4626");
 
         uint256 expectedEth = uint256(_migrationAmount).mulDivDown(_ethAmount, _totalSupply);
         assertEq(eth, expectedEth, "ETH");
