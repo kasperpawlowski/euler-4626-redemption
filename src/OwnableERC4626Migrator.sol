@@ -5,15 +5,14 @@ import {ERC20} from "solmate/tokens/ERC20.sol";
 import {SafeTransferLib} from "solmate/utils/SafeTransferLib.sol";
 import {FixedPointMathLib} from "solmate/utils/FixedPointMathLib.sol";
 import {ReentrancyGuard} from "solmate/utils/ReentrancyGuard.sol";
-import {SignatureChecker} from "oz/utils/cryptography/SignatureChecker.sol";
 import {Ownable2Step} from "oz/access/Ownable2Step.sol";
 
 /**
  * @title ERC4626Migrator
  * @author LHerskind
  * @notice Contract to be used for distributing tokens based on their shares of the total supply.
- * Practically LP tokens that can be migrated to ETH, DAI, and USDC.
- * Eth, Dai and USDC held by the contract will be used to distribute to users, so that the contract
+ * Practically LP tokens that can be migrated to WETH, DAI, and USDC.
+ * WETH, Dai and USDC held by the contract will be used to distribute to users, so that the contract
  * is funded before users start using it, as they otherwise could simply sacrifice their share of the
  * assets.
  * With admin functions, allowing an administrator to recover funds from the contract, update rates or
@@ -23,13 +22,20 @@ contract OwnableERC4626Migrator is Ownable2Step, ReentrancyGuard {
     using FixedPointMathLib for uint256;
     using SafeTransferLib for ERC20;
 
-    error InvalidSignature(address user, bytes signature);
+    error InvalidAcceptanceToken(address user, bytes32 acceptanceToken);
 
-    event Migrated(address indexed user, uint256 amount, uint256 ethAmount, uint256 daiAmount, uint256 usdcAmount);
+    event MigratedAndAgreed(address indexed user, uint256 amount, uint256 wethAmount, uint256 daiAmount, uint256 usdcAmount);
+    event MigratedByAdmin(address indexed user, uint256 amount, uint256 wethAmount, uint256 daiAmount, uint256 usdcAmount);
 
-    // @todo Replace this with the real hash
-    bytes32 public constant TOS = bytes32("TOS");
+    /**********
+    By clicking "I Agree" on the euler.finance web interface or executing the EulerClaims smart contract and accepting the redemption, I hereby irrevocably and unconditionally release all claims I (or my company or other separate legal entity) may have against Euler Labs, Ltd., the Euler Foundation, the Euler Decentralized Autonomous Organization, members of the Euler Decentralized Autonomous Organization, and any of their agents, affiliates, officers, employees, or principals related to this matter, whether such claims are known or unknown at this time and regardless of how such claims arise and the laws governing such claims (which shall include but not be limited to any claims arising out of Euler’s terms of use).  This release constitutes an express and voluntary binding waiver and relinquishment to the fullest extent permitted by law.  If I am acting for or on behalf of a company (or other such separate entity), by clicking "I Agree" on the euler.finance web interface or executing the EulerClaims smart contract and accepting the redemption and agreement, I confirm that I am duly authorised to enter into this contract on its behalf.
+    
+    This agreement and all disputes relating to or arising under this agreement (including the interpretation, validity or enforcement thereof) will be governed by and subject to the laws of England and Wales and the courts of London, England shall have exclusive jurisdiction to determine any such dispute.  To the extent that the terms of this release are inconsistent with any previous agreement and/or Euler’s terms of use, I accept that these terms take priority and, where necessary, replace the previous terms.
+    **********/
+    
+    bytes32 public constant TOS = 0x88237f4ba83ebd3a77bb33d44a5067d91fa9dbb17417741c8e224ada10e95314;
 
+    ERC20 public constant WETH = ERC20(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
     ERC20 public constant DAI = ERC20(0x6B175474E89094C44Da98b954EedeAC495271d0F);
     ERC20 public constant USDC = ERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48);
 
@@ -38,16 +44,13 @@ contract OwnableERC4626Migrator is Ownable2Step, ReentrancyGuard {
     ERC20 public immutable ERC4626Token;
 
     // @todo Don't need to be a full 256 bits each
-    uint256 public ethPerERC4626;
+    uint256 public wethPerERC4626;
     uint256 public daiPerERC4626;
     uint256 public usdcPerERC4626;
 
     constructor(ERC20 _erc4626) {
         ERC4626Token = _erc4626;
     }
-
-    // To receive eth
-    receive() external payable {}
 
     /**
      * @notice Updates the asset per ERC4626 token rate based on the floating supply
@@ -60,10 +63,10 @@ contract OwnableERC4626Migrator is Ownable2Step, ReentrancyGuard {
             return (0, 0, 0);
         }
 
-        ethPerERC4626 = address(this).balance.mulDivDown(1e18, _floatingSupply);
+        wethPerERC4626 = WETH.balanceOf(address(this)).mulDivDown(1e18, _floatingSupply);
         daiPerERC4626 = DAI.balanceOf(address(this)).mulDivDown(1e18, _floatingSupply);
         usdcPerERC4626 = USDC.balanceOf(address(this)).mulDivDown(1e18, _floatingSupply);
-        return (ethPerERC4626, daiPerERC4626, usdcPerERC4626);
+        return (wethPerERC4626, daiPerERC4626, usdcPerERC4626);
     }
 
     /**
@@ -74,19 +77,15 @@ contract OwnableERC4626Migrator is Ownable2Step, ReentrancyGuard {
      * @param _to - The address to send the recovered funds to
      */
     function adminRecover(address _token, uint256 _amount, address _to) external onlyOwner {
-        if (_token == address(0)) {
-            SafeTransferLib.safeTransferETH(_to, _amount);
-        } else {
-            ERC20(_token).safeTransfer(_to, _amount);
-        }
+        ERC20(_token).safeTransfer(_to, _amount);
     }
 
     /**
-     * @notice Admin function simulate migration of ERC4626 token to ETH, DAI, and USDC without
+     * @notice Admin function simulate migration of ERC4626 token to WETH, DAI, and USDC without
      * actually sacrificing ERC4626.
      * @param _amount - The amount of ERC4626 token to be migrated
      * @param _to - The address to send the recovered funds to
-     * @return The amount of eth sent to the user
+     * @return The amount of weth sent to the user
      * @return The amount of dai sent to the user
      * @return The amount of usdc sent to the user
      */
@@ -95,56 +94,51 @@ contract OwnableERC4626Migrator is Ownable2Step, ReentrancyGuard {
     }
 
     /**
-     * @notice Migrates ERC4626 token to ETH, DAI, and USDC
+     * @notice Migrates ERC4626 token to WETH, DAI, and USDC
      * @dev Reentry guard.
      * @param _amount - The amount of ERC4626 token to be migrated
-     * @dev Signature is formatted as [r, s, v]
-     * @dev Supports EIP-1271 signatures.
-     * @param _signature - A valid signature by the user signing over the TOS
-     * @return The amount of eth sent to the user
+     * @param _acceptanceToken -Custom token demonstrating the caller's agreement with the Terms and Conditions of the claim
+     * @return The amount of weth sent to the user
      * @return The amount of dai sent to the user
      * @return The amount of usdc sent to the user
      */
-    function migrate(uint256 _amount, bytes calldata _signature)
+    function migrate(uint256 _amount, bytes32 _acceptanceToken)
         external
         nonReentrant
         returns (uint256, uint256, uint256)
     {
-        // Checks that there either is a valid ECDSA signature provided, or that the calling contract
-        // implements EIP-1271, and have approved the signature.
-        if (!SignatureChecker.isValidSignatureNow(msg.sender, TOS, _signature)) {
-            revert InvalidSignature(msg.sender, _signature);
+        if (_acceptanceToken != keccak256(abi.encodePacked(msg.sender, TOS))) {
+            revert InvalidAcceptanceToken(msg.sender, _acceptanceToken);
         }
 
         return _exitFunds(_amount, msg.sender, true);
     }
 
     /**
-     * @notice Internal function to compute the amount of ETH, DAI, and USDC to send to the user.
+     * @notice Internal function to compute the amount of WETH, DAI, and USDC to send to the user.
      * @param _amount - The amount of ERC4626 token to be migrated
      * @param _to - The address to send the recovered funds to
      * @param _pullFunds - Whether to pull ERC4626 token from the user
-     * @return The amount of eth sent to the user
+     * @return The amount of weth sent to the user
      * @return The amount of dai sent to the user
      * @return The amount of usdc sent to the user
      */
     function _exitFunds(uint256 _amount, address _to, bool _pullFunds) internal returns (uint256, uint256, uint256) {
-        uint256 ethToSend = _amount.mulDivDown(ethPerERC4626, 1e18);
+        uint256 wethToSend = _amount.mulDivDown(wethPerERC4626, 1e18);
         uint256 daiToSend = _amount.mulDivDown(daiPerERC4626, 1e18);
         uint256 usdcToSend = _amount.mulDivDown(usdcPerERC4626, 1e18);
 
         if (_pullFunds) {
             ERC4626Token.safeTransferFrom(msg.sender, address(this), _amount);
+            emit MigratedAndAgreed(_to, _amount, wethToSend, daiToSend, usdcToSend);
+        } else {
+            emit MigratedByAdmin(_to, _amount, wethToSend, daiToSend, usdcToSend);
         }
 
+        if (wethToSend > 0) WETH.safeTransfer(_to, wethToSend);
         if (daiToSend > 0) DAI.safeTransfer(_to, daiToSend);
         if (usdcToSend > 0) USDC.safeTransfer(_to, usdcToSend);
-        if (ethToSend > 0) {
-            SafeTransferLib.safeTransferETH(_to, ethToSend);
-        }
 
-        emit Migrated(_to, _amount, ethToSend, daiToSend, usdcToSend);
-
-        return (ethToSend, daiToSend, usdcToSend);
+        return (wethToSend, daiToSend, usdcToSend);
     }
 }
