@@ -58,7 +58,7 @@ contract ERC4626MigratorTest is Test {
         ERC4626.approve(address(MIGRATOR), _migrationAmount);
 
         // Generate an acceptance token
-        bytes32 acceptanceToken = keccak256(abi.encodePacked(vars.user, MIGRATOR.TOS()));
+        bytes32 acceptanceToken = keccak256(abi.encodePacked(vars.user, MIGRATOR.termsAndConditionsHash()));
 
         assertEq(ERC4626.balanceOf(address(MIGRATOR)), 0, "ERC4626");
         assertEq(ERC4626.balanceOf(vars.user), _migrationAmount, "ERC4626");
@@ -108,7 +108,7 @@ contract ERC4626MigratorTest is Test {
         ERC4626.approve(address(MIGRATOR), _migrationAmount);
 
         // Generate an acceptance token
-        bytes32 acceptanceToken = keccak256(abi.encodePacked(vars.user, bytes32(uint(MIGRATOR.TOS()) + 1)));
+        bytes32 acceptanceToken = keccak256(abi.encodePacked(vars.user, bytes32(uint(MIGRATOR.termsAndConditionsHash()) + 1)));
 
         // Migrate
         vm.expectRevert(abi.encodeWithSignature("InvalidAcceptanceToken(address,bytes32)", vars.user, acceptanceToken));

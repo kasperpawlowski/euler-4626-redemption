@@ -28,8 +28,18 @@ contract ERC4626Migrator is ReentrancyGuard {
 
     This agreement and all disputes relating to or arising under this agreement (including the interpretation, validity or enforcement thereof) will be governed by and subject to the laws of England and Wales and the courts of London, England shall have exclusive jurisdiction to determine any such dispute.  To the extent that the terms of this release are inconsistent with any previous agreement and/or Euler’s terms of use, I accept that these terms take priority and, where necessary, replace the previous terms.
     **********/
-    
-    bytes32 public constant TOS = 0xc363fe4cdd3f22305ac245691fcdaee3ea8031ac1d5078fb042f886b7aec89c7;
+
+    // The following is a hash of the above terms and conditions.
+    // To calculate it, take the raw contents of https://github.com/euler-xyz/euler-claims-contract/blob/master/terms-and-conditions.txt
+    // and feed it into keccak256 function.
+    //
+    // By sending a transaction and claiming the redemption tokens, I understand and manifest my assent
+    // and agreement to be bound by the enforceable contract on this page, and agree that all claims or
+    // disputes under this agreement will be resolved exclusively by the courts of London, England in
+    // accordance with the laws of England and Wales. If I am acting for or on behalf of a company (or
+    // other such separate entity), by signing and sending a transaction I confirm that I am duly
+    // authorised to enter into this contract on its behalf.
+    bytes32 public constant termsAndConditionsHash = 0xc363fe4cdd3f22305ac245691fcdaee3ea8031ac1d5078fb042f886b7aec89c7;
 
     ERC20 public constant WETH = ERC20(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
     ERC20 public constant DAI = ERC20(0x6B175474E89094C44Da98b954EedeAC495271d0F);
@@ -62,7 +72,7 @@ contract ERC4626Migrator is ReentrancyGuard {
         // Pull ERC4626 token from the user
         // Send assets to the user
         // Emit event
-        if (_acceptanceToken != keccak256(abi.encodePacked(msg.sender, TOS))) {
+        if (_acceptanceToken != keccak256(abi.encodePacked(msg.sender, termsAndConditionsHash))) {
             revert InvalidAcceptanceToken(msg.sender, _acceptanceToken);
         }
 
