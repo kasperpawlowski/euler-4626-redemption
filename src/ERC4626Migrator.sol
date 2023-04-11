@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-pragma solidity >=0.8.0;
+pragma solidity 0.8.18;
 
 import {ERC20} from "solmate/tokens/ERC20.sol";
 import {SafeTransferLib} from "solmate/utils/SafeTransferLib.sol";
@@ -39,7 +39,7 @@ contract ERC4626Migrator is ReentrancyGuard {
     // accordance with the laws of England and Wales. If I am acting for or on behalf of a company (or
     // other such separate entity), by signing and sending a transaction I confirm that I am duly
     // authorised to enter into this contract on its behalf.
-    bytes32 public constant termsAndConditionsHash = 0xc363fe4cdd3f22305ac245691fcdaee3ea8031ac1d5078fb042f886b7aec89c7;
+    bytes32 public constant termsAndConditionsHash = 0x427a506ff6e15bd1b7e4e93da52c8ec95f6af1279618a2f076946e83d8294996;
 
     ERC20 public constant WETH = ERC20(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
     ERC20 public constant DAI = ERC20(0x6B175474E89094C44Da98b954EedeAC495271d0F);
