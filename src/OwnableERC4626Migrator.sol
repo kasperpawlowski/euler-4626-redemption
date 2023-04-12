@@ -5,7 +5,7 @@ import {ERC20} from "solmate/tokens/ERC20.sol";
 import {SafeTransferLib} from "solmate/utils/SafeTransferLib.sol";
 import {FixedPointMathLib} from "solmate/utils/FixedPointMathLib.sol";
 import {ReentrancyGuard} from "solmate/utils/ReentrancyGuard.sol";
-import {Ownable2Step} from "oz/access/Ownable2Step.sol";
+import {Ownable} from "oz/access/Ownable.sol";
 
 /**
  * @title ERC4626Migrator
@@ -18,7 +18,7 @@ import {Ownable2Step} from "oz/access/Ownable2Step.sol";
  * With admin functions, allowing an administrator to recover funds from the contract, update rates or
  * emulate migrations by users, if they for some reason are unable to migrate.
  */
-contract OwnableERC4626Migrator is Ownable2Step, ReentrancyGuard {
+contract OwnableERC4626Migrator is Ownable, ReentrancyGuard {
     using FixedPointMathLib for uint256;
     using SafeTransferLib for ERC20;
 
