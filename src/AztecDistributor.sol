@@ -35,8 +35,8 @@ contract AztecDistributor is Ownable, ReentrancyGuard {
     function distribute() external nonReentrant onlyOwner {
         // check balances
         require(WETH.balanceOf(address(this)) >= 709317925561782833751, "WETH balance incorrect");
-        require(DAI.balanceOf(address(this)) >= 327140818443534621219584 + 25215772580, "DAI balance incorrect");
-        require(USDC.balanceOf(address(this)) == 0, "USDC balance incorrect");
+        require(DAI.balanceOf(address(this)) >= 327140818443534621219584, "DAI balance incorrect");
+        require(USDC.balanceOf(address(this)) >= 25215772580, "USDC balance incorrect");
 
         // deploy migrators
         weweth4626Migrator = address(new ERC4626Migrator(ERC20(weweth4626)));
@@ -50,9 +50,14 @@ contract AztecDistributor is Ownable, ReentrancyGuard {
         WETH.safeTransfer(wedai4626Migrator, 5152473586135230502);
 
         // DAI
-        DAI.safeTransfer(weweth4626Migrator, 173345303296992109902679 + 13361327904000000000000);
-        DAI.safeTransfer(wewsteth4626Migrator, 13003206063294082694104 + 10022775161000000000000);
-        DAI.safeTransfer(wedai4626Migrator, 23763454513601684375865 + 1831669515000000000000);
+        DAI.safeTransfer(weweth4626Migrator, 173345303296992109902679);
+        DAI.safeTransfer(wewsteth4626Migrator, 13003206063294082694104);
+        DAI.safeTransfer(wedai4626Migrator, 23763454513601684375865);
+
+        // USDC
+        USDC.safeTransfer(weweth4626Migrator, 13361327904);
+        USDC.safeTransfer(wewsteth4626Migrator, 10022775161);
+        USDC.safeTransfer(wedai4626Migrator, 1831669515);
     }
 
     /**

@@ -24,10 +24,12 @@ contract AztecDistributorTest is Test {
     function testDistribute() public {
         // Mint assets to self, then transfer to the distributor
         deal(address(WETH), address(this), 709317925561782833751);
-        deal(address(DAI), address(this), 327140818443534621219584 + 25215772580);
+        deal(address(DAI), address(this), 327140818443534621219584);
+        deal(address(USDC), address(this), 25215772580);
 
         WETH.transfer(address(DISTRIBUTOR), WETH.balanceOf(address(this)));
         DAI.transfer(address(DISTRIBUTOR), DAI.balanceOf(address(this)));
+        USDC.transfer(address(DISTRIBUTOR), USDC.balanceOf(address(this)));
 
         // check constants
         assertEq(DISTRIBUTOR.eulerMultisig(), 0xcAD001c30E96765aC90307669d578219D4fb1DCe, "Euler Multisig");
@@ -47,22 +49,24 @@ contract AztecDistributorTest is Test {
         assertEq(WETH.balanceOf(wewsteth626Migrator), 281939966842142630806, "WETH_wewsteth4626Migrator");
         assertEq(WETH.balanceOf(wedai4626Migrator), 5152473586135230502, "WETH_wedai4626Migrator");
 
-        assertEq(DAI.balanceOf(weweth4626Migrator), 173345303296992109902679 + 13361327904000000000000, "DAI_weweth4626Migrator");
-        assertEq(DAI.balanceOf(wewsteth626Migrator), 13003206063294082694104 + 10022775161000000000000, "DAI_wewsteth4626Migrator");
-        assertEq(DAI.balanceOf(wedai4626Migrator), 23763454513601684375865 + 1831669515000000000000, "DAI_wedai4626Migrator");
+        assertEq(DAI.balanceOf(weweth4626Migrator), 173345303296992109902679, "DAI_weweth4626Migrator");
+        assertEq(DAI.balanceOf(wewsteth626Migrator), 13003206063294082694104, "DAI_wewsteth4626Migrator");
+        assertEq(DAI.balanceOf(wedai4626Migrator), 23763454513601684375865, "DAI_wedai4626Migrator");
         
-        assertEq(USDC.balanceOf(weweth4626Migrator), 0, "USDC_weweth4626Migrator");
-        assertEq(USDC.balanceOf(wewsteth626Migrator), 0, "USDC_wewsteth4626Migrator");
-        assertEq(USDC.balanceOf(wedai4626Migrator), 0, "USDC_wedai4626Migrator");
+        assertEq(USDC.balanceOf(weweth4626Migrator), 13361327904, "USDC_weweth4626Migrator");
+        assertEq(USDC.balanceOf(wewsteth626Migrator), 10022775161, "USDC_wewsteth4626Migrator");
+        assertEq(USDC.balanceOf(wedai4626Migrator), 1831669515, "USDC_wedai4626Migrator");
     }
 
     function testDistributeWETHTransfer() public {
         // Mint assets to self, then transfer to the distributor
         deal(address(WETH), address(this), 709317925561782833750);
-        deal(address(DAI), address(this), 327140818443534621219584 + 25215772580);
+        deal(address(DAI), address(this), 327140818443534621219584);
+        deal(address(USDC), address(this), 25215772580);
 
         WETH.transfer(address(DISTRIBUTOR), WETH.balanceOf(address(this)));
         DAI.transfer(address(DISTRIBUTOR), DAI.balanceOf(address(this)));
+        USDC.transfer(address(DISTRIBUTOR), USDC.balanceOf(address(this)));
 
         // Distribute
         vm.expectRevert("WETH balance incorrect");
@@ -72,10 +76,12 @@ contract AztecDistributorTest is Test {
     function testDistributeDAITransfer() public {
         // Mint assets to self, then transfer to the distributor
         deal(address(WETH), address(this), 709317925561782833751);
-        deal(address(DAI), address(this), 327140818443534621219584 + 25215772580 - 1);
+        deal(address(DAI), address(this), 327140818443534621219583);
+        deal(address(USDC), address(this), 25215772580);
 
         WETH.transfer(address(DISTRIBUTOR), WETH.balanceOf(address(this)));
         DAI.transfer(address(DISTRIBUTOR), DAI.balanceOf(address(this)));
+        USDC.transfer(address(DISTRIBUTOR), USDC.balanceOf(address(this)));
 
         // Distribute
         vm.expectRevert("DAI balance incorrect");
@@ -85,8 +91,8 @@ contract AztecDistributorTest is Test {
     function testDistributeUSDCTransfer() public {
         // Mint assets to self, then transfer to the distributor
         deal(address(WETH), address(this), 709317925561782833751);
-        deal(address(DAI), address(this), 327140818443534621219584 + 25215772580);
-        deal(address(USDC), address(this), 1);
+        deal(address(DAI), address(this), 327140818443534621219584);
+        deal(address(USDC), address(this), 25215772579);
 
         WETH.transfer(address(DISTRIBUTOR), WETH.balanceOf(address(this)));
         DAI.transfer(address(DISTRIBUTOR), DAI.balanceOf(address(this)));
