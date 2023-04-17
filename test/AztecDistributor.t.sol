@@ -47,10 +47,10 @@ contract AztecDistributorTest is Test {
 
         assertEq(WETH.balanceOf(weweth4626Migrator), 375853222858287897925, "WETH_weweth4626Migrator");
         assertEq(WETH.balanceOf(wewsteth626Migrator), 281939966842142630806, "WETH_wewsteth4626Migrator");
-        assertEq(WETH.balanceOf(wedai4626Migrator), 5152473586135230502, "WETH_wedai4626Migrator");
+        assertEq(WETH.balanceOf(wedai4626Migrator), 51524735861352305020, "WETH_wedai4626Migrator");
 
         assertEq(DAI.balanceOf(weweth4626Migrator), 173345303296992109902679, "DAI_weweth4626Migrator");
-        assertEq(DAI.balanceOf(wewsteth626Migrator), 13003206063294082694104, "DAI_wewsteth4626Migrator");
+        assertEq(DAI.balanceOf(wewsteth626Migrator), 130032060632940826941040, "DAI_wewsteth4626Migrator");
         assertEq(DAI.balanceOf(wedai4626Migrator), 23763454513601684375865, "DAI_wedai4626Migrator");
         
         assertEq(USDC.balanceOf(weweth4626Migrator), 13361327904, "USDC_weweth4626Migrator");
